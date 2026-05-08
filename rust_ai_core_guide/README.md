@@ -2,8 +2,6 @@
 
 Python 백엔드와 AI 생태계를 활용하면서, 병목이 되는 핵심 엔진은 Rust로 만드는 전략을 정리한 가이드입니다.
 
-이 문서는 Rust를 처음부터 AI 서비스 전체의 주 언어로 쓰자는 주장이 아닙니다. 오히려 현실적인 결론은 반대입니다.
-
 > Python으로 빠르게 만들고, 실제 병목이 드러난 핵심 코어만 Rust로 옮긴다.
 
 ---
@@ -60,13 +58,13 @@ AI 서비스에서 Python은 두뇌를 빠르게 조립하는 언어이고, Rust
 
 조금 더 구체적으로 말하면:
 
-| 역할 | 추천 기술 | 이유 |
-|---|---|---|
-| 논문 이해와 실험 | Python | PyTorch, Jupyter, Transformers 생태계가 압도적 |
-| 서비스 API | Python/FastAPI | 빠른 개발, 풍부한 라이브러리 |
-| 병목 코어 | Rust | 메모리 안정성, 병렬 처리, 낮은 지연 시간 |
-| GPU 추론 | CUDA/C++, TensorRT-LLM, vLLM | GPU 커널과 추론 스케줄링 전문 영역 |
-| 대규모 운영 | Kubernetes, Redis, Kafka/NATS, OpenTelemetry | 배포, 캐싱, 메시징, 관측성 |
+| 역할             | 추천 기술                                    | 이유                                           |
+| ---------------- | -------------------------------------------- | ---------------------------------------------- |
+| 논문 이해와 실험 | Python                                       | PyTorch, Jupyter, Transformers 생태계가 압도적 |
+| 서비스 API       | Python/FastAPI                               | 빠른 개발, 풍부한 라이브러리                   |
+| 병목 코어        | Rust                                         | 메모리 안정성, 병렬 처리, 낮은 지연 시간       |
+| GPU 추론         | CUDA/C++, TensorRT-LLM, vLLM                 | GPU 커널과 추론 스케줄링 전문 영역             |
+| 대규모 운영      | Kubernetes, Redis, Kafka/NATS, OpenTelemetry | 배포, 캐싱, 메시징, 관측성                     |
 
 ---
 
@@ -747,13 +745,13 @@ counts = count_tokens_batch(texts)
 
 선택 기준:
 
-| 연결 방식 | 적합한 경우 |
-|---|---|
-| PyO3 | 같은 프로세스에서 빠르게 호출 |
-| gRPC | 언어 독립 서비스화 |
-| HTTP | 단순한 내부 API |
-| NATS/Kafka | 비동기 pipeline |
-| FFI | 극단적인 성능 최적화 |
+| 연결 방식  | 적합한 경우                   |
+| ---------- | ----------------------------- |
+| PyO3       | 같은 프로세스에서 빠르게 호출 |
+| gRPC       | 언어 독립 서비스화            |
+| HTTP       | 단순한 내부 API               |
+| NATS/Kafka | 비동기 pipeline               |
+| FFI        | 극단적인 성능 최적화          |
 
 ---
 
@@ -977,12 +975,12 @@ Rust error를 Python exception으로 어떻게 바꿀지 정해야 합니다.
 
 예:
 
-| Rust error | Python exception |
-|---|---|
-| InvalidConfig | ValueError |
-| ParseError | RuntimeError 또는 custom ParseError |
-| Timeout | TimeoutError |
-| InternalError | RuntimeError |
+| Rust error    | Python exception                    |
+| ------------- | ----------------------------------- |
+| InvalidConfig | ValueError                          |
+| ParseError    | RuntimeError 또는 custom ParseError |
+| Timeout       | TimeoutError                        |
+| InternalError | RuntimeError                        |
 
 사용자에게 보일 오류와 내부 로그용 오류를 분리해야 합니다.
 
@@ -1212,29 +1210,30 @@ Rust는 GPU kernel 위의 scheduler, gateway, metadata engine, stream runtime에
 추천 프로젝트:
 
 1. `rust_ai_token_counter`
+
    - 여러 모델 tokenizer별 token count
    - batch API
    - Python binding
-
 2. `rust_rag_chunker`
+
    - Markdown/HTML 문서 chunking
    - heading-aware split
    - overlap
    - metadata extraction
-
 3. `rust_stream_gateway`
+
    - SSE relay
    - timeout
    - cancellation
    - heartbeat
-
 4. `rust_retrieval_merge`
+
    - dense/sparse score merge
    - deduplication
    - threshold filtering
    - top-k selection
-
 5. `rust_ai_policy_engine`
+
    - tenant quota
    - model routing
    - cache policy
@@ -1242,80 +1241,36 @@ Rust는 GPU kernel 위의 scheduler, gateway, metadata engine, stream runtime에
 
 ---
 
-## 예시 프로젝트 구조
-
-이 저장소가 앞으로 실제 코드까지 포함한다면 다음 구조가 좋습니다.
-
-```text
-rust_ai_core_stack/
-  README.md
-  docs/
-    architecture.md
-    python_rust_integration.md
-    benchmarking.md
-    deployment.md
-  crates/
-    rust_ai_tokenizer/
-      Cargo.toml
-      src/
-        lib.rs
-    rust_ai_chunker/
-      Cargo.toml
-      src/
-        lib.rs
-    rust_ai_retrieval/
-      Cargo.toml
-      src/
-        lib.rs
-    rust_ai_stream/
-      Cargo.toml
-      src/
-        lib.rs
-  python_examples/
-    fastapi_app/
-      app/
-        main.py
-        services/
-          chat_service.py
-      pyproject.toml
-  benchmarks/
-    tokenization_bench.md
-    parser_bench.md
-    streaming_bench.md
-```
-
----
-
 ## Rust AI Core 후보 모듈 목록
 
 ### 우선순위 높음
 
-| 모듈 | 설명 | Rust 도입 가치 |
-|---|---|---|
-| tokenizer/token counter | prompt 길이 계산, batch tokenization | 매우 높음 |
-| chunker | RAG 문서 split, overlap, metadata | 높음 |
-| parser | Markdown/HTML/code/log parser | 높음 |
-| retrieval merge | dense/sparse/hybrid result merge | 높음 |
-| streaming gateway | SSE/websocket relay | 높음 |
-| policy engine | quota, routing, rate limit | 높음 |
+| 모듈                    | 설명                                 | Rust 도입 가치 |
+| ----------------------- | ------------------------------------ | -------------- |
+| tokenizer/token counter | prompt 길이 계산, batch tokenization | 매우 높음      |
+| chunker                 | RAG 문서 split, overlap, metadata    | 높음           |
+| parser                  | Markdown/HTML/code/log parser        | 높음           |
+| retrieval merge         | dense/sparse/hybrid result merge     | 높음           |
+| streaming gateway       | SSE/websocket relay                  | 높음           |
+| policy engine           | quota, routing, rate limit           | 높음           |
 
 ### 우선순위 중간
 
-| 모듈 | 설명 | Rust 도입 가치 |
-|---|---|---|
-| cache key generator | prompt/request cache key | 중간 |
-| JSON normalizer | 대량 JSON 변환 | 중간 |
-| embedding preprocessor | vector normalization | 중간 |
-| evaluation metric core | 대량 metric 계산 | 중간 |
+| 모듈                   | 설명                     | Rust 도입 가치 |
+| ---------------------- | ------------------------ | -------------- |
+| cache key generator    | prompt/request cache key | 중간           |
+| JSON normalizer        | 대량 JSON 변환           | 중간           |
+| embedding preprocessor | vector normalization     | 중간           |
+| evaluation metric core | 대량 metric 계산         | 중간           |
 
 ### 신중히 판단
 
-| 모듈 | 설명 | 주의 |
-|---|---|---|
-| full agent runtime | 요구사항 변경이 잦음 | 너무 일찍 Rust화 비추천 |
-| training framework | PyTorch 생태계 우위 | Python 추천 |
-| GPU kernel | CUDA/C++ 생태계 우위 | Rust 단독 비추천 |
-| business logic 전체 | 변경 많음 | Python/Java/Spring이 나을 수 있음 |
+| 모듈                | 설명                 | 주의                              |
+| ------------------- | -------------------- | --------------------------------- |
+| full agent runtime  | 요구사항 변경이 잦음 | 너무 일찍 Rust화 비추천           |
+| training framework  | PyTorch 생태계 우위  | Python 추천                       |
+| GPU kernel          | CUDA/C++ 생태계 우위 | Rust 단독 비추천                  |
+| business logic 전체 | 변경 많음            | Python/Java/Spring이 나을 수 있음 |
 
 ---
 
@@ -1378,15 +1333,11 @@ Production optimization
 - 병목 측정 없이 Rust 도입
 - agent 실험과 training 연구를 Rust로 시작
 
-앞으로 AI 엔지니어링 경쟁은 단순히 모델을 호출하는 능력이 아니라, 모델 주변의 시스템을 얼마나 잘 만드는가로 갈 가능성이 큽니다.
-
-그 관점에서 Rust는 AI 인프라, AI gateway, retrieval engine, streaming runtime, inference scheduler 같은 영역에서 큰 차별화가 될 수 있습니다.
+Rust는 AI 인프라, AI gateway, retrieval engine, streaming runtime, inference scheduler 같은 영역에서 큰 차별화가 될 수 있습니다.
 
 ---
 
 ## 참고 자료
-
-아래 자료를 기준으로 내용을 정리했습니다. 버전과 API는 시간이 지나면 바뀔 수 있으므로 실제 구현 전에는 각 공식 문서를 다시 확인해야 합니다.
 
 - Rust 공식 문서: https://www.rust-lang.org/
 - The Rust Programming Language: https://doc.rust-lang.org/book/
